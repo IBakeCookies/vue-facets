@@ -1,23 +1,72 @@
 {
-  "name": "usefacets",
-  "private": true,
-  "version": "0.0.0",
+  "name": "vue-facets",
+  "version": "0.1.0",
+  "description": "Faceted filtering composable for Vue 3: filtered results, automatic disabled-facet state, and/or modes and a shareable query string.",
+  "license": "MIT",
+  "author": "IBakeCookies",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IBakeCookies/vue-facets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IBakeCookies/vue-facets/issues"
+  },
+  "homepage": "https://github.com/IBakeCookies/vue-facets#readme",
+  "keywords": [
+    "vue",
+    "vue3",
+    "composable",
+    "facet",
+    "facets",
+    "faceted-search",
+    "filter",
+    "filtering",
+    "search",
+    "typescript"
+  ],
   "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "build": "vite build && npm run build:types",
+    "build:types": "tsc -p tsconfig.build.json",
+    "build:demo": "vite build --mode demo",
+    "test": "vitest run src/",
+    "bench": "vitest run --reporter=verbose bench/",
+    "test:watch": "vitest src/",
+    "typecheck": "vue-tsc -b --force",
+    "prepublishOnly": "npm run test && npm run typecheck && npm run build"
   },
-  "dependencies": {
-    "vue": "^3.4.37"
+  "peerDependencies": {
+    "vue": "^3.4.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.2",
     "autoprefixer": "^10.4.20",
+    "jsdom": "^29.1.1",
     "postcss": "^8.4.44",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.5.3",
     "vite": "^5.4.1",
+    "vitest": "^4.1.10",
+    "vue": "^3.4.37",
     "vue-tsc": "^2.0.29"
   }
 }

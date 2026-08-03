@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Ref } from 'vue';
-import { shallowRef } from 'vue';
-import { useFacets } from './useFacets';
+import { onUnmounted, shallowRef, watch } from 'vue';
+import { useFacets } from '../src';
 
 interface Item {
     id: string;
@@ -11,24 +11,6 @@ interface Item {
     size: Set<string>;
     category: Set<string>;
 }
-
-// const possibleColors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
-// const possibleBrands = ['A', 'B', 'C', 'D', 'E', 'F'];
-// const possibleCategories = ['AAA', 'BBB', 'CCC', 'DDD', 'EEE', 'FFF'];
-// const possibleSizes = ['S', 'M', 'L', 'XL', 'XXL'];
-
-// const items: Ref<Item[]> = shallowRef(
-//     Array.from({ length: 10000 }, (_, i) => ({
-//         id: i.toString(),
-//         name: `Item ${i}`,
-//         color: new Set([possibleColors[Math.floor(Math.random() * possibleColors.length)]]),
-//         brand: new Set([possibleBrands[Math.floor(Math.random() * possibleBrands.length)]]),
-//         size: new Set([possibleSizes[Math.floor(Math.random() * possibleSizes.length)]]),
-//         category: new Set([
-//             possibleCategories[Math.floor(Math.random() * possibleCategories.length)],
-//         ]),
-//     })),
-// );
 
 const items: Ref<Item[]> = shallowRef([
     {
@@ -90,31 +72,34 @@ const {
     activeFacetsKeys,
     toggleFacet,
     removeFacet,
+    query,
+    applyQuery,
 } = useFacets<Item, 'color' | 'brand' | 'size' | 'category'>(items, {
-    isImmediate: true,
     facets: [
-        {
-            category: 'color',
-            label: 'color',
-            queryKey: 'color',
-        },
-        {
-            category: 'brand',
-            label: 'brand',
-            queryKey: 'brand',
-        },
-        {
-            category: 'size',
-            label: 'size',
-            queryKey: 'size',
-        },
-        {
-            category: 'category',
-            label: 'category',
-            queryKey: 'category',
-        },
+        { category: 'color' },
+        { category: 'brand' },
+        { category: 'size' },
+        // picking two values here requires an item to be in both, instead of either
+        { category: 'category', type: 'and' },
     ],
 });
+
+// the composable never touches the url itself - the app owns it. swap these lines for
+// vue-router (`router.push({ query })`) or drop them if you do not want shareable urls.
+applyQuery(window.location.search);
+
+watch(query, (value) => {
+    if (value === window.location.search.replace(/^\?/, '')) {
+        return;
+    }
+
+    window.history.pushState({}, '', value ? `?${value}` : window.location.pathname);
+});
+
+const onPopState = () => applyQuery(window.location.search);
+
+window.addEventListener('popstate', onPopState);
+onUnmounted(() => window.removeEventListener('popstate', onPopState));
 </script>
 
 <template>
@@ -132,17 +117,20 @@ const {
         </template>
 
         <div v-for="category in facetCategories" :key="category" class="mt-5">
-            <span class="font-bold block text-xl">{{ category }}</span>
+            <span class="font-bold block text-xl">
+                {{ facets[category].label }}
+                <span class="text-sm font-normal text-gray-500">{{ facets[category].type }}</span>
+            </span>
 
             <button
-                :disabled="facets[category].facets[facet]?.isDisabled"
-                class="px-5 py-3 rounded bg-gray-100 mr-5"
-                v-for="facet in Object.keys(facets[category].facets)"
+                v-for="(state, facet) in facets[category].facets"
                 :key="facet"
+                :disabled="state.isDisabled"
+                class="px-5 py-3 rounded bg-gray-100 mr-5"
                 @click="toggleFacet(category, facet)"
                 :class="{
-                    'bg-gray-200': facets[category].facets[facet]?.isActive,
-                    'opacity-50': facets[category].facets[facet]?.isDisabled,
+                    'bg-gray-200': state.isActive,
+                    'opacity-50': state.isDisabled,
                 }"
             >
                 {{ facet }}
